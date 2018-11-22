@@ -41,7 +41,8 @@ class Pessoa(Base):
 
 	id = Column(Integer, primary_key=True)
 	nome = Column(String(250), nullable=False)
-	dre = Column(Integer, nullable=False,ForeignKey('all_people.dre'))
+	dre = Column(Integer, ForeignKey('all_people.dre'))
+	all_people = relationship('All_people')
 	hora_chegada = Column(String(250), nullable=False)
 	hora_saida = Column(String(250), nullable=False)
 
