@@ -1,7 +1,7 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
-from classes import Base, All_people, Pessoa, Usuario
+from setupbd import Base, All_people, Pessoa, Usuario
 
 #engine = create_engine("mysql+mysqldb://root:password@localhost/app_proximo")
 engine = create_engine('mysql+mysqldb://so2018:bastoseleleo123@so2018.mysql.pythonanywhere-services.com/so2018$default')
