@@ -25,14 +25,14 @@ class All_people(Base):
 	__tablename__ = 'all_people'
 
 	id = Column(Integer, primary_key=True)
-	name = Column(String(250), nullable=False)
+	nome = Column(String(250), nullable=False)
 	dre = Column(Integer, nullable=False)
 
 	@property
 	def serialize(self):
 		return {
 		'id': self.id,
-		'nome': self.name,
+		'nome': self.nome,
 		'dre': self.dre,
 		}
 
@@ -41,9 +41,10 @@ class Pessoa(Base):
 
 	id = Column(Integer, primary_key=True)
 	nome = Column(String(250), nullable=False)
-	dre = Column(Integer, ForeignKey('all_people.dre'))
-	hora_chegada = Column(String(250), nullable=False)
+        dre = Column(Integer, ForeignKey('all_people.dre'))
+        hora_chegada = Column(String(250), nullable=False)
 	hora_saida = Column(String(250), nullable=False)
+       	all_people = relationship(All_people)
 
 	@property
 	def serialize(self):
