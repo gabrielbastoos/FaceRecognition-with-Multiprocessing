@@ -33,9 +33,21 @@ aluno1 = All_people(name="Zé das Couves",dre="12345678")
 session.add(aluno1)
 session.commit()
 
-
-testeTabela = Pessoa(nome="Zé das Couves", dre = aluno1.dre, data="01/01/2001", hora_chegada="08:00:10", hora_saida="18:00:10")
-session.add(testeTabela)
+gabriel = All_people(name="Gabriel Bastos",dre="115036300")
+session.add(gabriel)
 session.commit()
+
+leleo = All_people(name="Leonardo Feliciano",dre="000000000")
+session.add(leleo)
+session.commit()
+
+
+pessoa = session.query(All_people).all()
+
+for pessoas in pessoa:
+
+	testeTabela = Pessoa(nome=pessoas.name, dre = pessoas.dre, data="01/01/2001", hora_chegada="08:00:10", hora_saida="18:00:10")
+	session.add(testeTabela)
+	session.commit()
 
 print ("Banco de dados completo")

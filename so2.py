@@ -48,7 +48,7 @@ known_face_encodings = [
 ]
 
 known_face_names = [
-    "Leleo",
+    "Leonardo Feliciano",
     "Gabriel Bastos"
 ]
 
@@ -59,6 +59,8 @@ face_names = []
 process_this_frame = True
 tempo_anterior = 0
 tempo = 0
+
+dataAtual = datetime.now().strftime('%d/%m/%Y')
 
 #################
 # Funcao para usar o multiprocessing do python
@@ -125,16 +127,20 @@ while True:
         cv2.putText(frame, name, (left + 6, bottom - 6), font, 1.0, (255, 255, 255), 1)
 
         if name != "Desconhecido":
+
             people = session.query(All_people).filter_by(name=name).one()
-            print(name)
-            dataAtual = datetime.now().strftime('%d/%m/%Y')
-            pessoa = session.query(Pessoa).filter_by(nome=name).one()
-            print (pessoa)
-            if pessoa.data != dataAtual:
-                insert = Pessoa(nome=name, dre = people.dre, data=dataAtual,hora_chegada=datetime.now().strftime('%H:%M:%S'), hora_saida="18:00:10")
+            pessoa = session.query(Pessoa).filter_by(nome=name).all()
+
+            for pessoas in pessoa:
+                print (pessoas.hora_chegada)
+
+            if pessoas.data != dataAtual:
+                insert = Pessoa(nome=name, dre = people.dre, data=dataAtual, hora_chegada=datetime.now().strftime('%H:%M:%S'), hora_saida=pessoas.hora_saida)
                 session.add(insert)
                 session.commit()
-            
+            else:
+                session.query(Pessoa).filter_by(nome=name).filter_by(data=dataAtual).update({"hora_saida": datetime.now().strftime('%H:%M:%S')})
+                session.commit()
 
     # Mostra a imagem resultante
     cv2.imshow('Video', frame)
