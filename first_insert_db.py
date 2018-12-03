@@ -1,10 +1,10 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
-from classes import Base, All_people, Pessoa, Usuario
+from setupbd import Base, All_people, Pessoa, Usuario
 
-#engine = create_engine("mysql+mysqldb://root:password@localhost/app_proximo")
-engine = create_engine('mysql+mysqldb://so2018:bastoseleleo123@so2018.mysql.pythonanywhere-services.com/so2018$default')
+engine = create_engine("mysql+mysqldb://root:password@localhost/so2018")
+#engine = create_engine('mysql+mysqldb://so2018:bastoseleleo123@so2018.mysql.pythonanywhere-services.com/so2018$default')
 
 
 Base.metadata.bind = engine
@@ -20,7 +20,7 @@ session.execute('''TRUNCATE TABLE pessoa''')
 session.execute('''SET FOREIGN_KEY_CHECKS = 1''')
 session.commit()
 session.close()
-
+ 
 
 #Inserindo os dados
 
@@ -29,12 +29,12 @@ session.add(admin)
 session.commit()
 
 
-aluno1 = All_people(nome="Zé das Couves",dre="12345678")
+aluno1 = All_people(name="Zé das Couves",dre="12345678")
 session.add(aluno1)
 session.commit()
 
 
-testeTabela = Pessoa(nome="Zé das Couves", dre = aluno1.dre, hora_chegada="08:00:10", hora_saida="18:00:10")
+testeTabela = Pessoa(nome="Zé das Couves", dre = aluno1.dre, data="01/01/2001", hora_chegada="08:00:10", hora_saida="18:00:10")
 session.add(testeTabela)
 session.commit()
 

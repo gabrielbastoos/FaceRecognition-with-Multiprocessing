@@ -4,6 +4,7 @@ from sqlalchemy import create_engine, Column, ForeignKey, Integer, String
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 
+
 Base = declarative_base()
 
 class Usuario(Base):
@@ -27,7 +28,6 @@ class All_people(Base):
 	id = Column(Integer, primary_key=True)
 	name = Column(String(250), nullable=False)
 	dre = Column(Integer, nullable=False)
-
 	@property
 	def serialize(self):
 		return {
@@ -41,8 +41,8 @@ class Pessoa(Base):
 
 	id = Column(Integer, primary_key=True)
 	nome = Column(String(250), nullable=False)
-	dre = Column(Integer, ForeignKey('all_people.dre'))
-	all_people = relationship('All_people')
+	dre = Column(Integer, nullable=False)
+	data = Column(String(250), nullable=False)
 	hora_chegada = Column(String(250), nullable=False)
 	hora_saida = Column(String(250), nullable=False)
 
@@ -52,12 +52,13 @@ class Pessoa(Base):
 		'id': self.id,
 		'nome': self.nome,
 		'dre': self.dre,
+		'data': self.data,
 		'hora_chegada':self.hora_chegada,
 		'hora_saida':self.hora_saida
 		}
 
 
-#engine = create_engine("mysql+mysqldb://root:password@localhost/app_proximo")
-engine = create_engine('mysql+mysqldb://so2018:bastoseleleo123@so2018.mysql.pythonanywhere-services.com/so2018$default')
+engine = create_engine("mysql+mysqldb://root:password@localhost/so2018")
+#engine = create_engine('mysql+mysqldb://so2018:bastoseleleo123@so2018.mysql.pythonanywhere-services.com/so2018$default')
 
 Base.metadata.create_all(engine)
