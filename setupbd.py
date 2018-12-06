@@ -58,7 +58,7 @@ class Pessoa(Base):
 		}
 
 
-#engine = create_engine("mysql+mysqldb://root:password@localhost/so2018")
-engine = create_engine('mysql+mysqldb://so2018:bastoseleleo123@so2018.mysql.pythonanywhere-services.com/so2018$default')
+engine = create_engine("mysql+mysqldb://root:password@localhost/so2018")
+#engine = create_engine('mysql+mysqldb://so2018:bastoseleleo123@so2018.mysql.pythonanywhere-services.com/so2018$default')
 
 Base.metadata.create_all(engine)

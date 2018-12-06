@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
-import multiprocessing
+import multiprocessing 
+from multiprocessing import Pipe,Process    
 import multiprocessing.dummy as mp
 import face_recognition
 import cv2
@@ -48,27 +49,30 @@ process_this_frame = True
 tempo_anterior = 0
 tempo = 0
 
+
 #################
 # Funcao para usar o multiprocessing do python
 
 def face_match(face_encoding):
-	# Ver se a face encontrada está entre as conhecidas
-        matches = face_recognition.compare_faces(known_face_encodings, face_encoding)
-        name = "Desconhecido"
+    # Ver se a face encontrada está entre as conhecidas
+    matches = face_recognition.compare_faces(known_face_encodings, face_encoding)
+    name = "Desconhecido"
 
         # Se der um "match" entre a face reconhecida e uma já conhecida, usa a primeira.
-        if True in matches:
-        	first_match_index = matches.index(True)
-        	name = known_face_names[first_match_index]
+    if True in matches:
+        first_match_index = matches.index(True)
+        name = known_face_names[first_match_index]
 
-        face_names.append(name)
+    face_names.append(name)
 
 # Funcao para capturar a imagem
 
-def capture_and_resize():
-    global ret
-    global frame
-    global rgb_small_frame
+
+def capture_and_resize(ret,frame,rgb_small_frame):
+    
+    #global ret 
+    #global frame
+    #global rgb_small_frame
 
     ret, frame = video_capture.read() # Captura um frame do video
     small_frame = cv2.resize(frame, (0, 0), fx=0.25, fy=0.25) # Redimensiona a imagem para 1/4 da qualidade original para melhorar o tempo de reconhecimento.
@@ -76,29 +80,27 @@ def capture_and_resize():
 
 #
 
-def processar_video(rgb_small_frame):
-    global face_names
-    global face_locations
+def processar_video(face_names,face_locations):
+    #global face_names
+    #global face_locations
 
     face_locations = face_recognition.face_locations(rgb_small_frame)
     face_encodings = face_recognition.face_encodings(rgb_small_frame, face_locations)
 
     face_names = []
     if __name__ == '__main__':
-	pool = mp.Pool(2)
-	pool.map(face_match, face_encodings)
-	pool.close()
-	pool.join()
+    	pool = mp.Pool(2)
+    	pool.map(face_match, face_encodings)
+    	pool.close()
+    	pool.join()
 
 #################
 
-global rgb_small_frame
 
 while True:
     antes = time.time()
     processos = []
     
-
     # Captura um frame do video
     #ret, frame = video_capture.read()
 
@@ -110,14 +112,27 @@ while True:
     
     #capture_and_resize()
 
-    p1 = multiprocessing.Process(target=capture_and_resize)
+    parent_frame,frame = Pipe()
+    parent_ret,ret = Pipe()
+    parent_rgb_small_frame,rgb_small_frame = Pipe()
+    
+    p1 = multiprocessing.Process(target=capture_and_resize,args=(ret,frame,rgb_small_frame))
     processos.append(p1)
     p1.start()
     # So processa um frame por vez para economizar tempo
     
+    print(parent_frame)
+    p1.join()
+
     if process_this_frame:
-        global rgb_small_frame
-        p2 = multiprocessing.Process(target=processar_video, args=rgb_small_frame)
+
+        print("processando")
+        #processar_video()
+        
+        parent_face_names, face_names = Pipe()
+        parent_face_locations, face_locations = Pipe()
+    
+        p2 = multiprocessing.Process(target=processar_video, args=(face_names,face_locations))
         processos.append(p2)
         p2.start()
         #process()
@@ -136,7 +151,7 @@ while True:
 
 
     # Mostra os resultados
-    for (top, right, bottom, left), name in zip(face_locations, face_names):
+    for (top, right, bottom, left), name in zip(parent_face_locations, parent_face_names):
         # Desfaz o tratamento 1/4 que fizemos no inicio
         top *= 4
         right *= 4
@@ -166,7 +181,7 @@ while True:
 
     agora = time.time()
     diferenca = (agora - antes)
-    print diferenca
+    print (diferenca)
 
     # Aperte 'q' para sair!
     if cv2.waitKey(1) & 0xFF == ord('q'):
@@ -179,6 +194,6 @@ for processo in processos:
 
 agora = time.time()
 diferenca = (agora - antes)
-print diferenca
+print (diferenca)
 video_capture.release()
 cv2.destroyAllWindows()

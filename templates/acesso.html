@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Registro de acesso</title>
+</head>
+<body>
+    {%for pessoa in pessoas%}
+    	<li>
+    		<span>Nome:{{pessoa.nome}}</span><Br>
+    		<span>Horário de Chegada:{{pessoa.hora_chegada}}</span><br>
+    		<span>Horário de Saída:{{pessoa.hora_saida}}</span><br>
+        </li><br>
+    {%endfor%}
+<br>
+<form action="/atualizado" method=POST>
+	<input type="submit" value="Atualizar"> 
+</form>
+</body>
+</html>
