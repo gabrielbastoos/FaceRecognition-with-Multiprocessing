@@ -3,6 +3,7 @@ import multiprocessing.dummy as mp
 import face_recognition
 import cv2
 import time
+########################################
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from datetime import datetime
@@ -11,7 +12,6 @@ from setupbd import Base, All_people, Pessoa, Usuario
 
 engine = create_engine("mysql+mysqldb://root:password@localhost/so2018")
 #engine = create_engine('mysql+mysqldb://so2018:bastoseleleo123@so2018.mysql.pythonanywhere-services.com/so2018$default')
-
 
 Base.metadata.bind = engine
 
@@ -39,18 +39,45 @@ leleo_face_encoding = face_recognition.face_encodings(leleo_image)[0]
 bastos_image = face_recognition.load_image_file("bastos.jpg")
 bastos_face_encoding = face_recognition.face_encodings(bastos_image)[0]
 
+rodrigo_image = face_recognition.load_image_file("rodrigo.png")
+rodrigo_face_encoding = face_recognition.face_encodings(rodrigo_image)[0]
+
+fabiana_image = face_recognition.load_image_file("fabiana.jpg")
+fabiana_face_encoding = face_recognition.face_encodings(fabiana_image)[0]
+
+ronaldo_image = face_recognition.load_image_file("ronaldo.jpg")
+ronaldo_face_encoding = face_recognition.face_encodings(ronaldo_image)[0]
+
+japones_image = face_recognition.load_image_file("japones.jpg")
+japones_face_encoding = face_recognition.face_encodings(japones_image)[0]
+
+estranho_image = face_recognition.load_image_file("estranho.jpg")
+estranho_face_encoding = face_recognition.face_encodings(estranho_image)[0]
+
+
 # Cria um array de faces conhecidas e seus nomes.
 global face_names
 global known_face_encodings
 
 known_face_encodings = [
     leleo_face_encoding,
-    bastos_face_encoding
+    bastos_face_encoding,
+    rodrigo_face_encoding,
+    fabiana_face_encoding,
+    ronaldo_face_encoding,
+    japones_face_encoding,
+    estranho_face_encoding
 ]
 
 known_face_names = [
     "Leonardo Feliciano",
-    "Gabriel Bastos"
+    "Gabriel Bastos",
+    "Rodrigo Couto",
+    "Fabiana Ferreira",
+    "Ronaldo",
+    "Japones",
+    "Estranho"
+
 ]
 
 # Inicializa algumas variaveis
@@ -67,6 +94,7 @@ dataAtual = datetime.now().strftime('%d/%m/%Y')
 # Funcao para usar o multiprocessing do python
 
 def face_match(face_encoding):
+
     # Ver se a face encontrada esta entre as conhecidas
     matches = face_recognition.compare_faces(known_face_encodings, face_encoding)
     name = "Desconhecido"
@@ -81,11 +109,11 @@ def face_match(face_encoding):
 
 # Funcao para capturar a imagem
 
-global frame
-global ret
-global rgb_small_frame
-
-def capture_and_resize(frame, ret, rgb_small_frame):
+def capture_and_resize():
+    
+    global frame
+    global ret
+    global rgb_small_frame
     ret, frame = video_capture.read() # Captura um frame do video
     small_frame = cv2.resize(frame, (0, 0), fx=0.25, fy=0.25) # Redimensiona a imagem para 1/4 da qualidade original para melhorar o tempo de reconhecimento.
     rgb_small_frame = small_frame[:, :, ::-1] # Converte do padrao BRG (openCV usa) para o RGB (face_recognition usa).
@@ -95,8 +123,9 @@ def capture_and_resize(frame, ret, rgb_small_frame):
 while True:
     antes = time.time()
 
-    capture_and_resize(frame, ret, rgb_small_frame)
-    """
+    capture_and_resize()
+
+    '''
     # Captura um frame do video
     ret, frame = video_capture.read()
 
@@ -105,7 +134,7 @@ while True:
 
     # Converte do padrao BRG (openCV usa) para RGB (face_recognition usa).
     rgb_small_frame = small_frame[:, :, ::-1]
-    """
+    '''
     # So processa um frame por vez para economizar tempo
     if process_this_frame:
         # Procura todas as faces no video
@@ -119,6 +148,7 @@ while True:
             pool.map(face_match, face_encodings)
             pool.close()
             pool.join()
+
     process_this_frame = not process_this_frame
 
 
@@ -149,21 +179,23 @@ while True:
             font = cv2.FONT_HERSHEY_DUPLEX
             cv2.putText(frame, name, (left + 6, bottom - 6), font, 1.0, (255, 255, 255), 1)
         
-        if name != "Desconhecido":
+        if (name != "Desconhecido"):
 
             people = session.query(All_people).filter_by(name=name).one()
-            pessoa = session.query(Pessoa).filter_by(nome=name).all()
+            pessoas = session.query(Pessoa).filter_by(nome=name).all()
 
-            for pessoas in pessoa:
-                print (pessoas.hora_chegada)
+            for pessoa in pessoas:
+                print ("Conectando ao Banco....")
 
-            if pessoas.data != dataAtual:
-                insert = Pessoa(nome=name, dre = people.dre, data=dataAtual, hora_chegada=datetime.now().strftime('%H:%M:%S'), hora_saida=pessoas.hora_saida)
+            if (pessoa.data != dataAtual):
+
+                insert = Pessoa(nome=name, dre = people.dre, data=dataAtual, hora_chegada=datetime.now().strftime('%H:%M:%S'), hora_saida=pessoa.hora_saida)
                 session.add(insert)
                 session.commit()
             else:
                 session.query(Pessoa).filter_by(nome=name).filter_by(data=dataAtual).update({"hora_saida": datetime.now().strftime('%H:%M:%S')})
                 session.commit()
+
 
     # Mostra a imagem resultante
     cv2.imshow('Video', frame)

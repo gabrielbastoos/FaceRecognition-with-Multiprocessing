@@ -1,6 +1,11 @@
 # -*- coding: utf-8 -*-
+<<<<<<< HEAD
 import multiprocessing
 from multiprocessing import Pipe
+=======
+import multiprocessing 
+from multiprocessing import Pipe,Process    
+>>>>>>> 68d5a46f2c59af66c7bbf2d522c95e45bdda6b90
 import multiprocessing.dummy as mp
 import face_recognition
 import cv2
@@ -50,32 +55,52 @@ tempo_anterior = 0
 tempo = 0
 rgb_small_frame = Pipe(duplex=True)
 
+
 #################
 # Funcao para usar o multiprocessing do python
 
 def face_match(face_encoding):
-	# Ver se a face encontrada está entre as conhecidas
-        matches = face_recognition.compare_faces(known_face_encodings, face_encoding)
-        name = "Desconhecido"
+    # Ver se a face encontrada está entre as conhecidas
+    matches = face_recognition.compare_faces(known_face_encodings, face_encoding)
+    name = "Desconhecido"
 
         # Se der um "match" entre a face reconhecida e uma já conhecida, usa a primeira.
-        if True in matches:
-        	first_match_index = matches.index(True)
-        	name = known_face_names[first_match_index]
+    if True in matches:
+        first_match_index = matches.index(True)
+        name = known_face_names[first_match_index]
 
-        face_names.append(name)
+    face_names.append(name)
 
 # Funcao para capturar a imagem
 
+<<<<<<< HEAD
 def processar_video(rgb_small_frame):
     global face_match
     global face_encodings
+=======
+
+def capture_and_resize(ret,frame,rgb_small_frame):
+    
+    #global ret 
+    #global frame
+    #global rgb_small_frame
+
+    ret, frame = video_capture.read() # Captura um frame do video
+    small_frame = cv2.resize(frame, (0, 0), fx=0.25, fy=0.25) # Redimensiona a imagem para 1/4 da qualidade original para melhorar o tempo de reconhecimento.
+    rgb_small_frame = small_frame[:, :, ::-1] # Converte do padrao BRG (openCV usa) para o RGB (face_recognition usa).
+
+#
+
+def processar_video(face_names,face_locations):
+    #global face_names
+    #global face_locations
+>>>>>>> 68d5a46f2c59af66c7bbf2d522c95e45bdda6b90
 
     if __name__ == '__main__':
-	pool = mp.Pool(2)
-	pool.map(face_match, face_encodings)
-	pool.close()
-	pool.join()
+    	pool = mp.Pool(2)
+    	pool.map(face_match, face_encodings)
+    	pool.close()
+    	pool.join()
 
 #################
 
@@ -83,9 +108,13 @@ def processar_video(rgb_small_frame):
 while True:
     antes = time.time()
     processos = []
+<<<<<<< HEAD
     face_names = []
     #frame = Pipe(duplex=False)
 
+=======
+    
+>>>>>>> 68d5a46f2c59af66c7bbf2d522c95e45bdda6b90
     # Captura um frame do video
     #ret, frame = video_capture.read()
 
@@ -96,6 +125,7 @@ while True:
     #rgb_small_frame = small_frame[:, :, ::-1]
     
     #capture_and_resize()
+<<<<<<< HEAD
     
     
     ret, frame = video_capture.read()
@@ -104,13 +134,38 @@ while True:
     face_locations = face_recognition.face_locations(rgb_small_frame)
     face_encodings = face_recognition.face_encodings(rgb_small_frame, face_locations)
     
+=======
+
+    parent_frame,frame = Pipe()
+    parent_ret,ret = Pipe()
+    parent_rgb_small_frame,rgb_small_frame = Pipe()
+    
+    p1 = multiprocessing.Process(target=capture_and_resize,args=(ret,frame,rgb_small_frame))
+    processos.append(p1)
+    p1.start()
+>>>>>>> 68d5a46f2c59af66c7bbf2d522c95e45bdda6b90
     # So processa um frame por vez para economizar tempo
     
+    print(parent_frame)
+    p1.join()
+
     if process_this_frame:
 
+<<<<<<< HEAD
         p1 = multiprocessing.Process(target=processar_video, args=(rgb_small_frame,))
         processos.append(p1)
         p1.start()
+=======
+        print("processando")
+        #processar_video()
+        
+        parent_face_names, face_names = Pipe()
+        parent_face_locations, face_locations = Pipe()
+    
+        p2 = multiprocessing.Process(target=processar_video, args=(face_names,face_locations))
+        processos.append(p2)
+        p2.start()
+>>>>>>> 68d5a46f2c59af66c7bbf2d522c95e45bdda6b90
         #process()
         # Procura todas as faces no video
         #face_locations = face_recognition.face_locations(rgb_small_frame)
@@ -127,7 +182,7 @@ while True:
 
 
     # Mostra os resultados
-    for (top, right, bottom, left), name in zip(face_locations, face_names):
+    for (top, right, bottom, left), name in zip(parent_face_locations, parent_face_names):
         # Desfaz o tratamento 1/4 que fizemos no inicio
         top *= 4
         right *= 4
@@ -161,7 +216,7 @@ while True:
 
     agora = time.time()
     diferenca = (agora - antes)
-    print diferenca
+    print (diferenca)
 
     #p1.join()
 
@@ -174,6 +229,6 @@ while True:
 #p2.join()
 agora = time.time()
 diferenca = (agora - antes)
-print diferenca
+print (diferenca)
 video_capture.release()
 cv2.destroyAllWindows()
