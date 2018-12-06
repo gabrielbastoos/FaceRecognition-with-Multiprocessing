@@ -1,12 +1,10 @@
-# -*- coding: utf-8 -*-
-import multiprocessing
-from multiprocessing import Pipe
+#-*-coding: utf-8 -*-
 import multiprocessing.dummy as mp
 import face_recognition
+import multiprocessing
+from multiprocessing import Pipe, Queue
 import cv2
 import time
-import os
-import Queue
 
 # This is a demo of running face recognition on live video from your webcam. It's a little more complicated than the
 # other example, but it includes some basic performance tweaks to make things run a lot faster:
@@ -29,6 +27,8 @@ bastos_image = face_recognition.load_image_file("bastos.jpg")
 bastos_face_encoding = face_recognition.face_encodings(bastos_image)[0]
 
 # Cria um array de faces conhecidas e seus nomes.
+global face_names
+global known_face_encodings
 known_face_encodings = [
     leleo_face_encoding,
     bastos_face_encoding
@@ -39,21 +39,21 @@ known_face_names = [
 ]
 
 # Inicializa algumas variaveis
-
-#rgb_small_frame
-
 face_locations = []
 face_encodings = []
 face_names = []
 process_this_frame = True
 tempo_anterior = 0
 tempo = 0
-rgb_small_frame = Pipe(duplex=True)
 
 #################
 # Funcao para usar o multiprocessing do python
 
 def face_match(face_encoding):
+        global known_face_encodings
+        global face_names
+        global name
+
 	# Ver se a face encontrada está entre as conhecidas
         matches = face_recognition.compare_faces(known_face_encodings, face_encoding)
         name = "Desconhecido"
@@ -65,60 +65,35 @@ def face_match(face_encoding):
 
         face_names.append(name)
 
-# Funcao para capturar a imagem
-
-def processar_video(rgb_small_frame):
-    global face_match
-    global face_encodings
-
-    if __name__ == '__main__':
-	pool = mp.Pool(2)
-	pool.map(face_match, face_encodings)
-	pool.close()
-	pool.join()
+	
 
 #################
 
-
 while True:
     antes = time.time()
-    processos = []
-    face_names = []
-    #frame = Pipe(duplex=False)
+    face_encodings = Queue()
 
     # Captura um frame do video
-    #ret, frame = video_capture.read()
+    ret, frame = video_capture.read()
 
     # Redimensiona a imagem para 1/4 da qualidade original para melhorar o tempo de reconhecimento.
-    #small_frame = cv2.resize(frame, (0, 0), fx=0.25, fy=0.25)
+    small_frame = cv2.resize(frame, (0, 0), fx=0.25, fy=0.25)
 
     # Converte do padrao BRG (openCV usa) para RGB (face_recognition usa).
-    #rgb_small_frame = small_frame[:, :, ::-1]
-    
-    #capture_and_resize()
-    
-    
-    ret, frame = video_capture.read()
-    small_frame = cv2.resize(frame, (0, 0), fx=0.25, fy=0.25) # Redimensiona a imagem para 1/4 da qualidade original para melhorar o tempo de reconhecimento.
-    rgb_small_frame = small_frame[:, :, ::-1] # Converte do padrao BRG (openCV usa) para o RGB (face_recognition usa).
-    face_locations = face_recognition.face_locations(rgb_small_frame)
-    face_encodings = face_recognition.face_encodings(rgb_small_frame, face_locations)
-    
+    rgb_small_frame = small_frame[:, :, ::-1]
+
     # So processa um frame por vez para economizar tempo
-    
     if process_this_frame:
-
-        p1 = multiprocessing.Process(target=processar_video, args=(rgb_small_frame,))
-        processos.append(p1)
-        p1.start()
-        #process()
         # Procura todas as faces no video
-        #face_locations = face_recognition.face_locations(rgb_small_frame)
-        #face_encodings = face_recognition.face_encodings(rgb_small_frame, face_locations)
+        face_locations = face_recognition.face_locations(rgb_small_frame)
+        face_encodings = face_recognition.face_encodings(rgb_small_frame, face_locations)
 
-        #face_names = []
+        face_names = []
+        p1 = multiprocessing.Process(target=face_match, args=(face_encodings,))
+        p1.start()
+        p1.join()
         #if __name__ == '__main__':
-	#	pool = mp.Pool(2)
+	#	pool = mp.Pool(1)
 	#	pool.map(face_match, face_encodings)
 	#	pool.close()
 	#	pool.join()
@@ -133,45 +108,28 @@ while True:
         right *= 4
         bottom *= 4
         left *= 4
-        
-        if (name=="Desconhecido"):
-            # Desenha uma caixa em torno da pessoa
-            cv2.rectangle(frame, (left, top), (right, bottom), (0, 0, 255), 2)
 
-            # Escreve o nome embaixo da caixa
-            cv2.rectangle(frame, (left, bottom - 35), (right, bottom), (0, 0, 255), cv2.FILLED)
-            font = cv2.FONT_HERSHEY_DUPLEX
-            cv2.putText(frame, name, (left + 6, bottom - 6), font, 1.0, (255, 255, 255), 1)
-        
-        else:
-            # Desenha uma caixa em torno da pessoa
-            cv2.rectangle(frame, (left, top), (right, bottom), (0, 255, 0), 2)
+        # Desenha uma caixa em torno da pessoa
+        cv2.rectangle(frame, (left, top), (right, bottom), (0, 0, 255), 2)
 
-            # Escreve o nome embaixo da caixa
-            cv2.rectangle(frame, (left, bottom - 35), (right, bottom), (0, 255, 0), cv2.FILLED)
-            font = cv2.FONT_HERSHEY_DUPLEX
-            cv2.putText(frame, name, (left + 6, bottom - 6), font, 1.0, (255, 255, 255), 1)
-    
+        # Escreve o nome embaixo da caixa
+        cv2.rectangle(frame, (left, bottom - 35), (right, bottom), (0, 0, 255), cv2.FILLED)
+        font = cv2.FONT_HERSHEY_DUPLEX
+        cv2.putText(frame, name, (left + 6, bottom - 6), font, 1.0, (255, 255, 255), 1)
+
     # Mostra a imagem resultante
-    p1.join()
     cv2.imshow('Video', frame)
-        #p2 = multiprocessing.Process(target=cv2.imshow, args=('Video', frame,))
-        #processos.append(p2)
-        #p2.start()
 
     agora = time.time()
     diferenca = (agora - antes)
     print diferenca
 
-    #p1.join()
 
     # Aperte 'q' para sair!
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
 
 # Fecha a conexao com a webcam
-
-#p2.join()
 agora = time.time()
 diferenca = (agora - antes)
 print diferenca
